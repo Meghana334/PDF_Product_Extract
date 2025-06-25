@@ -1,0 +1,65 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+.env/
+.venv/
+env/
+venv/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# VS Code settings
+.vscode/
+
+# PyInstaller build
+dist/
+build/
+*.spec
+
+# Logs
+*.log
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+coverage.xml
+*.cover
+*.py,cover
+
+# MyPy
+.mypy_cache/
+
+# Pyre type checker
+.pyre/
+
+# Data files
+*.csv
+*.tsv
+*.json
+*.xlsx
+*.db
+*.sqlite3
+
+# System files
+.DS_Store
+Thumbs.db
+
+# PDF Extraction Project Specific
+extracted_images/
+outputs/
+__output_files__/
+data.json
+*.pdf
+*.png
+*.jpg
+*.jpeg
+*.zip
+
+# Poetry
+poetry.lock
