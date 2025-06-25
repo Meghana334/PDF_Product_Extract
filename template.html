@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MS75 - Maruyama</title>
+    <script src="./main.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+        }
+        
+        .header {
+            background: white;
+            border-bottom: 1px solid #ddd;
+            padding: 10px 0;
+        }
+        
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            font-size: 12px;
+        }
+        
+        .header-top-left {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .header-top-right {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .header-main {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 15px 20px;
+        }
+        
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .logo::before {
+            content: "M";
+            background: #e74c3c;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 3px;
+            margin-right: 5px;
+        }
+        
+        .search-bar {
+            flex: 1;
+            max-width: 400px;
+            margin: 0 40px;
+            position: relative;
+        }
+        
+        .search-bar input {
+            width: 100%;
+            padding: 10px 40px 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        
+        .search-bar::after {
+            content: "🔍";
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        
+        .nav {
+            display: flex;
+            gap: 30px;
+            align-items: center;
+        }
+        
+        .nav a {
+            text-decoration: none;
+            color: #333;
+            font-weight: 500;
+        }
+        
+        .nav a.active {
+            color: #e74c3c;
+        }
+        
+        .breadcrumb {
+            background: white;
+            padding: 15px 0;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .breadcrumb-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .main-content {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 0 20px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+        }
+        
+        .product-images {
+            position: relative;
+        }
+        
+        .main-image {
+            width: 100%;
+            background: white;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .main-image img {
+            max-width: 100%;
+            height: auto;
+        }
+        
+        .thumbnail-nav {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .feature-grid{
+            display: grid;
+            grid-template-columns: 50% 50%;
+            column-gap: 50px;
+            row-gap: 50px;
+            list-style: none;
+        }
+        .feature-grid li{
+
+        }
+        .feature-grid li img{
+            width: 100%;
+            height: 146px;
+            object-fit: cover;
+        }
+
+        .nav-arrow {
+            background: #f0f0f0;
+            border: none;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        .thumbnails {
+            display: flex;
+            gap: 10px;
+            flex: 1;
+        }
+        
+        .thumbnail {
+            width: 60px;
+            height: 60px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            cursor: pointer;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .thumbnail.active {
+            border-color: #e74c3c;
+        }
+        
+        .product-info h1 {
+            font-size: 48px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .category {
+            color: #e74c3c;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+        
+        .description {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+        
+        .rating {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-bottom: 30px;
+        }
+        
+        .stars {
+            color: #e74c3c;
+        }
+        
+        .rating-text {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 40px;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 500;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+        
+        .btn-primary {
+            background: #2c3e50;
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: transparent;
+            color: #333;
+            border: 1px solid #ddd;
+        }
+        
+        .collapsible-section {
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 20px;
+        }
+        
+        .collapsible-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        .collapsible-content {
+            padding-bottom: 20px;
+            color: #666;
+            line-height: 1.6;
+            display: none;
+        }
+        
+        .collapsible-content.active {
+            display: block;
+        }
+        
+        .accordion-arrow {
+            transition: transform 0.3s ease;
+        }
+        
+        .accordion-arrow.rotated {
+            transform: rotate(180deg);
+        }
+        
+        .catalog-section {
+            max-width: 1200px;
+            margin: 60px auto;
+            padding: 0 20px;
+        }
+        
+        .catalog-header {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 30px;
+            color: #333;
+            border-bottom: 3px solid #e74c3c;
+            padding-bottom: 10px;
+            display: inline-block;
+        }
+        
+        .catalog-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+        }
+        
+        .catalog-item {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .catalog-download {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .pdf-icon {
+            background: #e74c3c;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        
+        .download-btn {
+            background: #f0f0f0;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        .catalog-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .catalog-description {
+            color: #666;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-top">
+            <div class="header-top-left">
+                <span>🏳️ English ▼</span>
+                <span>Contact Us</span>
+            </div>
+            <div class="header-top-right">
+                <span>Product Registration</span>
+                <span>Warranty</span>
+                <span>Support</span>
+                <span>Product Catalog</span>
+                <span>Find a Dealer</span>
+                <span style="color: #e74c3c; border: 1px solid #e74c3c; padding: 5px 10px; border-radius: 3px;">Sign In / Register</span>
+            </div>
+        </div>
+        <div class="header-main">
+            <!-- <div class="logo">MARUYAMA</div> -->
+            <img src="{{logo}}" alt="maruyama-logo" style="height: 40px;">
+
+            <div class="search-bar">
+                <input type="text" placeholder="Search">
+            </div>
+            <nav class="nav">
+                <a href="#">About Us</a>
+                <a href="#" class="active">Products</a>
+                <a href="#">Spares & Accessories</a>
+                <a href="#">Blogs</a>
+                <a href="#">Careers</a>
+            </nav>
+        </div>
+    </div>
+    
+    <div class="breadcrumb">
+        <div class="breadcrumb-content">
+            Home / Power Sprayers / MS75
+        </div>
+    </div>
+    
+    <div class="main-content">
+        <div class="product-images">
+            <div class="main-image">
+                <img src="{{mainImage}}" alt="{{productName}}" style="max-width: 100%; height: auto;">
+            </div>
+            <div class="thumbnail-nav">
+                <button class="nav-arrow">‹</button>
+                <div class="thumbnails">
+                    {{#thumbnails}}
+                    <div class="thumbnail {{#if @first}}active{{/if}}">
+                        <img src="{{this}}" alt="Thumbnail" style="width: 100%; height: 100%; object-fit: cover; border-radius: 3px;">
+                    </div>
+                    {{/thumbnails}}
+                </div>
+                <button class="nav-arrow">›</button>
+            </div>
+        </div>
+        
+        <div class="product-info">
+            <h1>{{productName}}</h1>
+            <div class="category">Category: <span style="color: #e74c3c;">{{category}}</span></div>
+            <div class="description">
+                {{description}}
+            </div>
+            <div class="rating">
+                <span class="stars">★ {{rating}}</span>
+                <span class="rating-text">({{reviewCount}})</span>
+            </div>
+            <div class="action-buttons">
+                <a href="#" class="btn btn-primary">Find a Dealer</a>
+                <a href="#" class="btn btn-secondary">Request Information</a>
+            </div>
+            
+            <div class="collapsible-section">
+                <div class="collapsible-header" onclick="toggleAccordion(this)">
+                    Product Description
+                    <span class="accordion-arrow">▼</span>
+                </div>
+                <div class="collapsible-content active">
+                    {{detailedDescription}}
+                </div>
+            </div>
+            
+            <div class="collapsible-section">
+                <div class="collapsible-header" onclick="toggleAccordion(this)">
+                    Features
+                    <span class="accordion-arrow">▼</span>
+                </div>
+                <div class="collapsible-content">
+                  
+                    <ul class="feature-grid">
+                        {{#features}}
+                        <li>{{this}}</li>
+                        {{/features}}
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="collapsible-section">
+                <div class="collapsible-header" onclick="toggleAccordion(this)">
+                    Specification
+                    <span class="accordion-arrow">▼</span>
+                </div>
+                <div class="collapsible-content">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        {{#specifications}}
+                        <tr>
+                            <td style="padding: 8px; border-bottom: 1px solid #eee; font-weight: 600;">{{label}}</td>
+                            <td style="padding: 8px; border-bottom: 1px solid #eee;">{{value}}</td>
+                        </tr>
+                        {{/specifications}}
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="catalog-section">
+        <div class="catalog-header">Product Catalogue</div>
+        <div class="catalog-grid">
+            <div class="catalog-item">
+                <div class="catalog-download">
+                    <span class="pdf-icon">Pdf</span>
+                    <span class="catalog-title">MS75 Catalog</span>
+                    <button class="download-btn">⬇</button>
+                </div>
+                <div class="catalog-description">
+                    Maruyama backpack power sprayers are lightweight, rugged, designed
+                </div>
+            </div>
+            <div class="catalog-item">
+                <div class="catalog-download">
+                    <span class="pdf-icon">Pdf</span>
+                    <span class="catalog-title">MS75 Catalog</span>
+                    <button class="download-btn">⬇</button>
+                </div>
+                <div class="catalog-description">
+                    Maruyama backpack power sprayers are lightweight, rugged, designed
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function toggleAccordion(header) {
+            const content = header.nextElementSibling;
+            const arrow = header.querySelector('.accordion-arrow');
+            
+            if (content.classList.contains('active')) {
+                content.classList.remove('active');
+                arrow.classList.remove('rotated');
+            } else {
+                content.classList.add('active');
+                arrow.classList.add('rotated');
+            }
+        }
+    </script>
+</body>
+</html>

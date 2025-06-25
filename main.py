@@ -1,27 +1,33 @@
-from mistralai import Mistral, DocumentURLChunk
+
+# Your existing imports
+
+from mistralai import Mistral
 from pathlib import Path
+from mistralai import DocumentURLChunk, ImageURLChunk, TextChunk
+import json
 import json
 import base64
 import os
-import ast
-import re
 
 from logger import setup_logger, log_info
-from ocr_convertor5 import process_ocr_response
-from groq import Groq
 
 logger = setup_logger()
 
-# Setup API keys
-api_key = ""
-os.environ["GROQ_API_KEY"] = ''
+# NEW: Import the organizer function
+from ocr_organizer import process_ocr_response
 
+# Your existing OCR processing code remains the same
+api_key = "6tEP5J5UjidmzaFxjtCdbkFhriH4w3LD"
+os.environ["GROQ_API_KEY"] = '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'
 client = Mistral(api_key=api_key)
-groq_client = Groq(api_key=os.environ["GROQ_API_KEY"])
+from groq import Groq
 
-pdf_file = Path(r"C:\Users\MEGHA\OneDrive\Desktop\AIProj\pdf_to_html\integrated_pdf\test1.pdf")
 
-# Upload the PDF to Mistral OCR
+groq_client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
+
+pdf_file = Path("data/test.pdf")
+# assert pdf_file.is_file()
+
 uploaded_file = client.files.upload(
     file={
         "file_name": pdf_file.stem,
@@ -32,102 +38,99 @@ uploaded_file = client.files.upload(
 
 signed_url = client.files.get_signed_url(file_id=uploaded_file.id, expiry=1)
 
-# Run OCR processing
 pdf_response = client.ocr.process(
     document=DocumentURLChunk(document_url=signed_url.url),
     model="mistral-ocr-latest",
     include_image_base64=True
 )
 
-response_dict = json.loads(pdf_response.model_dump_json())
+# ✅ Use safe native Python dict
+response_dict = pdf_response.model_dump()
+
+# Continue to process
 organized_data = process_ocr_response(response_dict, str(pdf_file))
 
 
-# ✅ Accurate LLM-based product name + description extraction
-def extract_product_metadata(text: str) -> dict:
+
+
+# print("Processing completed! Check the generated files.")
+
+# pprint.pprint(response_dict)
+
+def generate_product_desc(product_input: str) -> str:
+    """
+    Generate an enhanced product description using Groq AI.
+    
+    Args:
+        product_input (str): Product description and features (as a combined text str format)
+        groq_api_key (str): Your Groq API key
+    
+    Returns:
+        str: Generated product description
+    """
+
+    
+    # Create a comprehensive prompt for product description generation
     prompt = f"""
-You are an intelligent assistant. From the following product-related OCR text, extract the **product_name** and **product_description**.
+    You are an expert product description writer. Create a compelling, professional product description based on the following product information:
 
-- product_name: Use the actual title (4–10 words max, no model/brand codes)
-- product_description: What it is, what it does, and who it's for in clean English.
+    Product Information: {product_input}
 
-Return JSON only like:
-{{
-  "product_name": "Electric Industrial Blower",
-  "product_description": "A high-speed blower designed for industrial cooling and ventilation systems."
-}}
-
-Text:
-{text}
-""".strip()
-
+    Please generate a well-structured product description that includes :
+    - An engaging headline/title
+    - Key features and benefits
+    - Clear value proposition
+    - Compelling call-to-action language
+    - SEO-friendly content
+    
+    Make it persuasive, informative, and customer-focused. Keep the tone professional yet engaging.
+    Note: Don't Generate more than 3 lines (FOLLOW THIS STRICTLY)
+    NOTE: don't format it just raw text (FOLLOW THIS STRICTLY)
+    """
+    
     try:
+        # Create completion
         completion = groq_client.chat.completions.create(
-            model="llama3-8b-8192",
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0.3,
-            max_tokens=512,
+            model="llama-3.1-8b-instant",
+            messages=[
+                {
+                    "role": "user",
+                    "content": prompt
+                }
+            ],
+            temperature=0.7,  # Slightly lower for more consistent output
+            max_completion_tokens=1024,
             top_p=1,
+            stream=True,
+            stop=None,
         )
-        output = completion.choices[0].message.content.strip()
-
-        # Try to find complete or partial JSON
-        json_match = re.search(r'\{.*?\}', output, re.DOTALL)
-
-        if not json_match:
-            start = output.find("{")
-            if start != -1:
-                partial = output[start:]
-                if partial.count("{") > partial.count("}"):
-                    partial += "}" * (partial.count("{") - partial.count("}"))
-                json_match = re.search(r'\{.*\}', partial, re.DOTALL)
-
-        if json_match:
-            json_str = json_match.group()
-
-            # Fix single quotes
-            if json_str.startswith("{'") and not json_str.startswith('{"'):
-                json_str = json_str.replace("'", '"')
-
-            try:
-                return json.loads(json_str)
-            except json.JSONDecodeError:
-                return ast.literal_eval(json_str)
-
-        return {"error": "No valid JSON found in model response."}
-
+        
+        # Collect the streamed response
+        generated_description = ""
+        for chunk in completion:
+            if chunk.choices[0].delta.content:
+                generated_description += chunk.choices[0].delta.content
+        
+        return generated_description.strip()
+    
     except Exception as e:
-        return {"error": str(e)}
-
-
-# 🔁 Update each product with improved metadata
-for product in organized_data["products"]:
-    raw_text = product.get("raw_text", "")
-    metadata = extract_product_metadata(raw_text)
-
-
-    if metadata:
-        product["product_name"] = metadata.get("product_name", product.get("product_name", ""))
-        product["product_description"] = metadata.get("product_description", product.get("product_description", ""))
-
-
-# 📂 Save the organized product data
-with open("test4_organized_data.json", "w", encoding="utf-8") as f:
-    json.dump(organized_data, f, indent=2, ensure_ascii=False)
-
-
-# 🔁 Convert JSON for frontend consumption
+        return f"Error generating product description: {str(e)}"
+    
+    
 def convert_json_format(input_file, output_file):
-    with open(input_file, 'r', encoding='utf-8') as f:
+    # Read the input JSON
+    with open(input_file, 'r') as f:
         data = json.load(f)
-
+    
+    # Helper function to read image and convert to base64
     def image_to_base64(image_path):
         try:
             with open(image_path, 'rb') as img_file:
                 return base64.b64encode(img_file.read()).decode('utf-8')
         except:
             return ""
-
+    
+    # Helper function to extract specifications from tables
     def extract_specifications(tables):
         specs = []
         for table in tables:
@@ -140,6 +143,7 @@ def convert_json_format(input_file, output_file):
                                 "label": label_value[0].strip(),
                                 "value": label_value[1].strip()
                             })
+            # Handle single row tables from headers
             if 'headers' in table and len(table['headers']) >= 2:
                 header_parts = table['headers'][1].split(' | ')
                 if len(header_parts) == 2:
@@ -148,39 +152,64 @@ def convert_json_format(input_file, output_file):
                         "value": header_parts[1].strip()
                     })
         return specs
-
+    
+    # Convert each product
     converted_products = []
     for product in data['products']:
+        # Get base64 data from all_page_images
         main_image_base64 = ""
         thumbnails = []
+        count =0
         if 'all_page_images' in product and product['all_page_images']:
             for img_data in product['all_page_images']:
-                if 'base64_data' in img_data and img_data["id"] != "img-0.jpeg":
-                    thumbnails.append(img_data['base64_data'])
-        if product["all_page_images"]:
-            main_image_base64 = product["all_page_images"][0]["base64_data"]
-
+                if 'base64_data' in img_data and img_data["id"]!= "img-0.jpeg":
+                    print(img_data["id"])
+                    base64_str = img_data['base64_data']
+                    count += 1 
+                    thumbnails.append(base64_str)
+        main_image_base64 = product["all_page_images"][0]["base64_data"]
+        print(product["all_page_images"][0]["id"])
+        
+        # If all_page_images is empty, try to read from local paths
+        count =0
+        if not main_image_base64 and 'product_images' in product:
+            for img_path in product['product_images']:
+                base64_data = image_to_base64(img_path)
+                if base64_data:
+                    full_base64 = f"data:image/jpeg;base64,{base64_data}"
+                    if main_image_base64 == "":
+                        main_image_base64 = full_base64
+                    count += 1
+                    print(f"Count of Image {count}")    
+                    thumbnails.append(full_base64)
+        
         converted_product = {
             "product_name": product.get('product_name', ''),
-            "product_description": product.get('product_description', ''),
-            "category": "Blowers",
-            "rating": "4.5",
-            "reviewCount": "128",
+            "product_description": generate_product_desc(f"{product.get('product_description', '')}"),
+            "category": "Blowers",  # Default category
+            "rating": "4.5",  # Default rating
+            "reviewCount": "128",  # Default review count
             "detailedDescription": f"This is a {product.get('product_description', 'product')} designed for professional use.",
             "features": product.get('features', []),
             "specifications": extract_specifications(product.get('tables', [])),
             "mainImage": main_image_base64,
-            "thumbnails": thumbnails,
-            "groq_chunks": product.get("groq_chunks", [])
+            "thumbnails": thumbnails
         }
-
+        
         converted_products.append(converted_product)
+    
+    # Create final output structure
+    output_data = {
+        "products": converted_products
+    }
+    
+    # Write to output file
+    with open(output_file, 'w') as f:
+        json.dump(output_data, f, indent=2)
 
-    output_data = {"products": converted_products}
-
-    with open(output_file, 'w', encoding='utf-8') as f:
-        json.dump(output_data, f, indent=2, ensure_ascii=False)
+# Usage
+convert_json_format('test_organized_data.json', 'data.json')
 
 
-# ✅ Create UI-ready JSON
-convert_json_format('test4_organized_data.json', 'data.json')
+
+
