@@ -8,7 +8,7 @@ from main import process_ocr_response, convert_json_format
 import base64
 
 # === Settings ===
-MISTRAL_API_KEY = os.getenv("MISTRAL_API_KEY", "6tEP5J5UjidmzaFxjtCdbkFhriH4w3LD")
+MISTRAL_API_KEY = os.getenv("MISTRAL_API_KEY", "j3QqwjYyXHa692fQKr3hawypMuYCdRmE")
 UPLOAD_DIR = "uploads"
 TEMPLATE_PATH = "template.html"
 OUTPUT_HTML_PATH = "rendered_product.html"

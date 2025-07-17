@@ -1,6 +1,3 @@
-
-# Your existing imports
-
 from mistralai import Mistral
 from pathlib import Path
 from mistralai import DocumentURLChunk, ImageURLChunk, TextChunk
@@ -16,16 +13,20 @@ logger = setup_logger()
 # NEW: Import the organizer function
 from ocr_organizer import process_ocr_response
 
+from dotenv import load_dotenv
+load_dotenv()
+
+
 # Your existing OCR processing code remains the same
-api_key = "6tEP5J5UjidmzaFxjtCdbkFhriH4w3LD"
-os.environ["GROQ_API_KEY"] = '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'
+api_key = os.getenv("MISTRAL_API_KEY")
+
 client = Mistral(api_key=api_key)
 from groq import Groq
 
 
 groq_client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
 
-pdf_file = Path("data/test.pdf")
+pdf_file = Path("data/test_2.pdf")
 # assert pdf_file.is_file()
 
 uploaded_file = client.files.upload(
@@ -43,6 +44,8 @@ pdf_response = client.ocr.process(
     model="mistral-ocr-latest",
     include_image_base64=True
 )
+log_info(logger,"pdf_response")
+log_info(logger,pdf_response)
 
 # ✅ Use safe native Python dict
 response_dict = pdf_response.model_dump()
@@ -208,7 +211,7 @@ def convert_json_format(input_file, output_file):
         json.dump(output_data, f, indent=2)
 
 # Usage
-convert_json_format('test_organized_data.json', 'data.json')
+convert_json_format('test_2_organized_data.json', 'data.json')
 
 
 
