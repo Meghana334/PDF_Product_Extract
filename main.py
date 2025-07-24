@@ -12,53 +12,74 @@ logger = setup_logger()
 
 # NEW: Import the organizer function
 from ocr_organizer import process_ocr_response
-
 from dotenv import load_dotenv
 load_dotenv()
 
 
 # Your existing OCR processing code remains the same
-api_key = os.getenv("MISTRAL_API_KEY")
+#api_key = os.getenv("MISTRAL_API_KEY")
 
-client = Mistral(api_key=api_key)
+#client = Mistral(api_key=api_key)
 from groq import Groq
 
 
 groq_client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
 
-pdf_file = Path("data/test_2.pdf")
+#pdf_file = Path("data/test_2.pdf")
 # assert pdf_file.is_file()
 
-uploaded_file = client.files.upload(
-    file={
-        "file_name": pdf_file.stem,
-        "content": pdf_file.read_bytes(),
-    },
-    purpose="ocr",
-)
+import base64
+import os
+from mistralai import Mistral
 
-signed_url = client.files.get_signed_url(file_id=uploaded_file.id, expiry=1)
+def encode_pdf(pdf_path):
+    """Encode the pdf to base64."""
+    try:
+        with open(pdf_path, "rb") as pdf_file:
+            return base64.b64encode(pdf_file.read()).decode('utf-8')
+    except FileNotFoundError:
+        print(f"Error: The file {pdf_path} was not found.")
+        return None
+    except Exception as e:  # Added general exception handling
+        print(f"Error: {e}")
+        return None
 
-pdf_response = client.ocr.process(
-    document=DocumentURLChunk(document_url=signed_url.url),
-    model="mistral-ocr-latest",
-    include_image_base64=True
-)
-log_info(logger,"pdf_response")
-log_info(logger,pdf_response)
-
-# ✅ Use safe native Python dict
-response_dict = pdf_response.model_dump()
-
-# Continue to process
-organized_data = process_ocr_response(response_dict, str(pdf_file))
+# Path to your pdf
 
 
+# Getting the base64 string
+# base64_pdf = encode_pdf(pdf_file)
+
+# api_key = os.environ["MISTRAL_API_KEY"]
+# client = Mistral(api_key=api_key)
+
+# ocr_response = client.ocr.process(
+#     model="mistral-ocr-latest",
+#     document={
+#         "type": "document_url",
+#         "document_url": f"data:application/pdf;base64,{base64_pdf}" 
+#     },
+#     include_image_base64=True
+# )
 
 
-# print("Processing completed! Check the generated files.")
 
-# pprint.pprint(response_dict)
+
+# log_info(logger,"ocr_response")
+# log_info(logger,"pdf_response")
+
+# # ✅ Use safe native Python dict
+# response_dict = ocr_response.model_dump()
+
+# # Continue to process
+# organized_data = process_ocr_response(response_dict, str(pdf_file))
+
+
+
+
+# # print("Processing completed! Check the generated files.")
+
+# # pprint.pprint(response_dict)
 
 def generate_product_desc(product_input: str) -> str:
     """
@@ -211,7 +232,7 @@ def convert_json_format(input_file, output_file):
         json.dump(output_data, f, indent=2)
 
 # Usage
-convert_json_format('test_2_organized_data.json', 'data.json')
+# convert_json_format('test_2_organized_data.json', 'data.json')
 
 
 

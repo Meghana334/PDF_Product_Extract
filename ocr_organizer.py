@@ -12,6 +12,9 @@ from logger import setup_logger, log_info
 
 logger = setup_logger()
 #api key
+
+from dotenv import load_dotenv
+load_dotenv()
 groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
 def save_base64_image(base64_str: str, filename: str, output_dir: str = "extracted_images") -> str:
@@ -360,8 +363,8 @@ def organize_ocr_response(ocr_response_dict: Dict[str, Any], pdf_filename: str) 
 
         for image in page.get("images", []):
             image_id = image.get("id", f"img_{image_counter}")
-            # if image_id in ["img-6.jpeg"]:
-            #     continue
+            if image_id in ["img-6.jpeg"]:
+                 continue
 
             image_filename = f"page_{page_idx + 1}image{image_counter}.jpg"
             try:
