@@ -11,7 +11,7 @@ from groq import Groq
 from logger import setup_logger, log_info
 
 logger = setup_logger()
-#api key
+
 
 from dotenv import load_dotenv
 load_dotenv()
