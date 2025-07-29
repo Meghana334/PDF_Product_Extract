@@ -64,3 +64,4 @@ data.json
 
 # Poetry
 poetry.lock
+json-v2/

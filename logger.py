@@ -1,40 +1,31 @@
-# -----------------------------------------------------------------------------
-# Setup logging
-# -----------------------------------------------------------------------------
+# logger.py
 import logging
-import datetime
-import sys
-
 import os
+from datetime import datetime
 
+def setup_logger(name: str, log_dir: str = "logs") -> logging.Logger:
+    os.makedirs(log_dir, exist_ok=True)
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    log_file = os.path.join(log_dir, f"{name}_{timestamp}.log")
 
-def setup_logger(name="suvetha", level=logging.INFO):
     logger = logging.getLogger(name)
+    logger.setLevel(logging.DEBUG)
+
+    # Console Handler
+    console_handler = logging.StreamHandler()
+    console_handler.setLevel(logging.INFO)
+    console_format = logging.Formatter('[%(levelname)s] %(message)s')
+    console_handler.setFormatter(console_format)
+
+    # File Handler
+    file_handler = logging.FileHandler(log_file)
+    file_handler.setLevel(logging.DEBUG)
+    file_format = logging.Formatter('%(asctime)s [%(levelname)s] %(name)s: %(message)s')
+    file_handler.setFormatter(file_format)
+
+    # Avoid duplicate handlers if re-imported
     if not logger.handlers:
-        logger.setLevel(level)
-        
-        # Create console handler
-        console_handler = logging.StreamHandler(sys.stdout)
-        console_handler.setLevel(level)
-        
-        # Create file handler
-        log_dir = 'logs'
-        os.makedirs(log_dir, exist_ok=True)
-        timestamp = datetime.datetime.now().strftime("%H_%M_%d-%m-%Y")
-        file_handler = logging.FileHandler(f"{log_dir}/{name}_{timestamp}.log")
-    
-        file_handler.setLevel(level)
-        
-        # Create formatter
-        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-        console_handler.setFormatter(formatter)
-        file_handler.setFormatter(formatter)
-        
-        # Add handlers to logger
         logger.addHandler(console_handler)
         logger.addHandler(file_handler)
-    
-    return logger
 
-def log_info(logger, message):
-    logger.info(message)
+    return logger

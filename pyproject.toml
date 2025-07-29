@@ -1,17 +1,21 @@
 [project]
-name = "pdf-html-convertor"
+name = "pdf_2_Json"
 version = "0.0.1"
-description = "pdf content extraction and organizing in json file"
+description = ""
 authors = [
-    {name = "Meghana334",email = "meghanayabaku@gmail.com"}
+    {name = "Meghana334",email = "Meghanayabaku@gmail.com"}
 ]
+package-mode = false
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-    "mistralai (>=1.8.2,<2.0.0)",
-    "markdown (>=3.8,<4.0)",
-    "groq (>=0.28.0,<0.29.0)",
-    "python-dotenv (>=1.1.0,<2.0.0)"
+    "mistralai (>=1.9.3,<2.0.0)",
+    "groq (>=0.30.0,<0.31.0)",
+    "python-dotenv (>=1.1.1,<2.0.0)",
+    "markdown (>=3.8.2,<4.0.0)",
+    "pymupdf (>=1.26.3,<2.0.0)",
+    "pillow (>=11.3.0,<12.0.0)",
+    "requests (>=2.32.4,<3.0.0)"
 ]
 
 

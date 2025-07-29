@@ -1,238 +1,129 @@
-from mistralai import Mistral
+import json
+import os
 from pathlib import Path
-from mistralai import DocumentURLChunk, ImageURLChunk, TextChunk
-import json
-import json
-import base64
-import os
+from ocr_processor import StructuredPDFExtractor
+from logger import setup_logger
 
-from logger import setup_logger, log_info
+logger = setup_logger("main")
 
-logger = setup_logger()
+# === Load API Keys ===
+DEFAULT_MISTRAL_API_KEY = os.getenv("MISTRAL_API_KEY",None)
+DEFAULT_GROQ_API_KEY = os.getenv("GROQ_API_KEY", None)
 
-# NEW: Import the organizer function
-from ocr_organizer import process_ocr_response
-from dotenv import load_dotenv
-load_dotenv()
+# === Load config.json if available ===
+def load_config(config_path: str = "config.json"):
+    if Path(config_path).exists():
+        with open(config_path, "r") as f:
+            return json.load(f)
+    return None
 
-
-# Your existing OCR processing code remains the same
-#api_key = os.getenv("MISTRAL_API_KEY")
-
-#client = Mistral(api_key=api_key)
-from groq import Groq
-
-
-groq_client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
-
-#pdf_file = Path("data/test_2.pdf")
-# assert pdf_file.is_file()
-
-import base64
-import os
-from mistralai import Mistral
-
-def encode_pdf(pdf_path):
-    """Encode the pdf to base64."""
-    try:
-        with open(pdf_path, "rb") as pdf_file:
-            return base64.b64encode(pdf_file.read()).decode('utf-8')
-    except FileNotFoundError:
-        print(f"Error: The file {pdf_path} was not found.")
-        return None
-    except Exception as e:  # Added general exception handling
-        print(f"Error: {e}")
-        return None
-
-# Path to your pdf
-
-
-# Getting the base64 string
-# base64_pdf = encode_pdf(pdf_file)
-
-# api_key = os.environ["MISTRAL_API_KEY"]
-# client = Mistral(api_key=api_key)
-
-# ocr_response = client.ocr.process(
-#     model="mistral-ocr-latest",
-#     document={
-#         "type": "document_url",
-#         "document_url": f"data:application/pdf;base64,{base64_pdf}" 
-#     },
-#     include_image_base64=True
-# )
-
-
-
-
-# log_info(logger,"ocr_response")
-# log_info(logger,"pdf_response")
-
-# # ✅ Use safe native Python dict
-# response_dict = ocr_response.model_dump()
-
-# # Continue to process
-# organized_data = process_ocr_response(response_dict, str(pdf_file))
-
-
-
-
-# # print("Processing completed! Check the generated files.")
-
-# # pprint.pprint(response_dict)
-
-def generate_product_desc(product_input: str) -> str:
-    """
-    Generate an enhanced product description using Groq AI.
-    
-    Args:
-        product_input (str): Product description and features (as a combined text str format)
-        groq_api_key (str): Your Groq API key
-    
-    Returns:
-        str: Generated product description
-    """
-
-    
-    # Create a comprehensive prompt for product description generation
-    prompt = f"""
-    You are an expert product description writer. Create a compelling, professional product description based on the following product information:
-
-    Product Information: {product_input}
-
-    Please generate a well-structured product description that includes :
-    - An engaging headline/title
-    - Key features and benefits
-    - Clear value proposition
-    - Compelling call-to-action language
-    - SEO-friendly content
-    
-    Make it persuasive, informative, and customer-focused. Keep the tone professional yet engaging.
-    Note: Don't Generate more than 3 lines (FOLLOW THIS STRICTLY)
-    NOTE: don't format it just raw text (FOLLOW THIS STRICTLY)
-    """
-    
-    try:
-        # Create completion
-        completion = groq_client.chat.completions.create(
-            model="llama-3.1-8b-instant",
-            messages=[
-                {
-                    "role": "user",
-                    "content": prompt
-                }
-            ],
-            temperature=0.7,  # Slightly lower for more consistent output
-            max_completion_tokens=1024,
-            top_p=1,
-            stream=True,
-            stop=None,
-        )
-        
-        # Collect the streamed response
-        generated_description = ""
-        for chunk in completion:
-            if chunk.choices[0].delta.content:
-                generated_description += chunk.choices[0].delta.content
-        
-        return generated_description.strip()
-    
-    except Exception as e:
-        return f"Error generating product description: {str(e)}"
-    
-    
-def convert_json_format(input_file, output_file):
-    # Read the input JSON
-    with open(input_file, 'r') as f:
-        data = json.load(f)
-    
-    # Helper function to read image and convert to base64
-    def image_to_base64(image_path):
-        try:
-            with open(image_path, 'rb') as img_file:
-                return base64.b64encode(img_file.read()).decode('utf-8')
-        except:
-            return ""
-    
-    # Helper function to extract specifications from tables
-    def extract_specifications(tables):
-        specs = []
-        for table in tables:
-            if 'rows' in table:
-                for row in table['rows']:
-                    if len(row) >= 2:
-                        label_value = row[1].split(' | ')
-                        if len(label_value) == 2:
-                            specs.append({
-                                "label": label_value[0].strip(),
-                                "value": label_value[1].strip()
-                            })
-            # Handle single row tables from headers
-            if 'headers' in table and len(table['headers']) >= 2:
-                header_parts = table['headers'][1].split(' | ')
-                if len(header_parts) == 2:
-                    specs.append({
-                        "label": header_parts[0].strip(),
-                        "value": header_parts[1].strip()
-                    })
-        return specs
-    
-    # Convert each product
-    converted_products = []
-    for product in data['products']:
-        # Get base64 data from all_page_images
-        main_image_base64 = ""
-        thumbnails = []
-        count =0
-        if 'all_page_images' in product and product['all_page_images']:
-            for img_data in product['all_page_images']:
-                if 'base64_data' in img_data and img_data["id"]!= "img-0.jpeg":
-                    print(img_data["id"])
-                    base64_str = img_data['base64_data']
-                    count += 1 
-                    thumbnails.append(base64_str)
-        main_image_base64 = product["all_page_images"][0]["base64_data"]
-        print(product["all_page_images"][0]["id"])
-        
-        # If all_page_images is empty, try to read from local paths
-        count =0
-        if not main_image_base64 and 'product_images' in product:
-            for img_path in product['product_images']:
-                base64_data = image_to_base64(img_path)
-                if base64_data:
-                    full_base64 = f"data:image/jpeg;base64,{base64_data}"
-                    if main_image_base64 == "":
-                        main_image_base64 = full_base64
-                    count += 1
-                    print(f"Count of Image {count}")    
-                    thumbnails.append(full_base64)
-        
-        converted_product = {
-            "product_name": product.get('product_name', ''),
-            "product_description": generate_product_desc(f"{product.get('product_description', '')}"),
-            "category": "Blowers",  # Default category
-            "rating": "4.5",  # Default rating
-            "reviewCount": "128",  # Default review count
-            "detailedDescription": f"This is a {product.get('product_description', 'product')} designed for professional use.",
-            "features": product.get('features', []),
-            "specifications": extract_specifications(product.get('tables', [])),
-            "mainImage": main_image_base64,
-            "thumbnails": thumbnails
+# === Create Sample Config ===
+def create_sample_config():
+    config = {
+        "api_keys": {
+            "mistral_api_key": DEFAULT_MISTRAL_API_KEY,
+            "groq_api_key": DEFAULT_GROQ_API_KEY
+        },
+        "settings": {
+            "output_directory": "output",
+            "image_output_directory": "extracted_images",
+            "include_raw_text": True,
+            "generate_thumbnails": True,
+            "skip_image_ids": ["img-1.jpeg", "img-6.jpeg"]
         }
-        
-        converted_products.append(converted_product)
-    
-    # Create final output structure
-    output_data = {
-        "products": converted_products
     }
-    
-    # Write to output file
-    with open(output_file, 'w') as f:
-        json.dump(output_data, f, indent=2)
+    with open("config.json", "w") as f:
+        json.dump(config, f, indent=2)
+    logger.info("✅ Sample config.json created")
 
-# Usage
-# convert_json_format('test_2_organized_data.json', 'data.json')
+# === Process Single PDF ===
+def process_single_pdf(pdf_path: str, mistral_api_key: str, groq_api_key: str, output_dir: str = "output"):
+    logger.info(f"Processing PDF: {pdf_path}")
+    os.makedirs(output_dir, exist_ok=True)
+
+    extractor = StructuredPDFExtractor(
+        mistral_api_key=mistral_api_key,
+        groq_api_key=groq_api_key
+    )
+
+    result = extractor.extract_from_pdf(Path(pdf_path))
+    extractor.print_extraction_summary(result)
+
+    output_structured = os.path.join(output_dir, f"{Path(pdf_path).stem}_structured.json")
+    extractor.save_structured_data(result, output_structured)
+
+    frontend_data = extractor.convert_to_frontend_format(result)
+    output_frontend = os.path.join(output_dir, f"{Path(pdf_path).stem}_frontend.json")
+    with open(output_frontend, "w", encoding='utf-8') as f:
+        json.dump(frontend_data, f, indent=2, ensure_ascii=False)
+
+    logger.info(f"✅ Saved structured JSON to: {output_structured}")
+    logger.info(f"✅ Saved frontend JSON to: {output_frontend}")
+
+# === Demo Function ===
+def demonstrate_extraction(mistral_api_key: str, groq_api_key: str):
+    logger.info("=== PDF Extraction Demo ===")
+    pdf_path = "PDF_Product_Extract/data/test.pdf"
+
+    if Path(pdf_path).exists():
+        process_single_pdf(pdf_path, mistral_api_key, groq_api_key)
+    else:
+        logger.error(f"❌ File not found: {pdf_path}")
+
+# === Main Entry Point ===
+def main():
+    logger.info("🚀 Starting Structured PDF Extraction System")
+    logger.info("=" * 50)
+
+    config = load_config()
+
+    if config:
+        logger.info("✅ Loaded configuration from config.json")
+        mistral_key = config["api_keys"].get("mistral_api_key", DEFAULT_MISTRAL_API_KEY)
+        groq_key = config["api_keys"].get("groq_api_key", DEFAULT_GROQ_API_KEY)
+    else:
+        logger.warning("⚠️  No config file found, using default values")
+        logger.info("💡 Run with --create-config to generate one")
+        mistral_key = DEFAULT_MISTRAL_API_KEY
+        groq_key = DEFAULT_GROQ_API_KEY
+
+    import sys
+    if len(sys.argv) > 1:
+        arg = sys.argv[1]
+        if arg == "--create-config":
+            create_sample_config()
+        # elif arg == "--help":
+        #     print_help()
+        elif arg == "--demo":
+            demonstrate_extraction(mistral_key, groq_key)
+        else:
+            pdf_path = arg
+            output_dir = sys.argv[2] if len(sys.argv) > 2 else "output"
+            if Path(pdf_path).exists():
+                process_single_pdf(pdf_path, mistral_key, groq_key, output_dir)
+            else:
+                logger.error(f"❌ File not found: {pdf_path}")
+    else:
+        demonstrate_extraction(mistral_key, groq_key)
+
+
+
+if __name__ == "__main__":
+    create_sample_config()
+    config = load_config()
+
+    if config:
+        logger.info("✅ Loaded configuration from config.json")
+        mistral_key = config["api_keys"].get("mistral_api_key", DEFAULT_MISTRAL_API_KEY)
+        groq_key = config["api_keys"].get("groq_api_key", DEFAULT_GROQ_API_KEY)
+    else:
+        logger.warning("⚠️  No config file found, using default values")
+        logger.info("💡 Run with --create-config to generate one")
+        mistral_key = DEFAULT_MISTRAL_API_KEY
+        groq_key = DEFAULT_GROQ_API_KEY
+
+    demonstrate_extraction(mistral_api_key=mistral_key,groq_api_key=groq_key)
+
 
 
 
