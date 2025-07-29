@@ -60,6 +60,7 @@ data.json
 *.jpg
 *.jpeg
 *.zip
+*.env
 
 # Poetry
 poetry.lock
