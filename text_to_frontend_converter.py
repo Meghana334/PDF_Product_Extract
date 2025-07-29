@@ -145,7 +145,7 @@ def main():
     import sys
     
     # Default API key
-    DEFAULT_GROQ_API_KEY = os.getenv("GROQ_API_KEY", "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")
+    DEFAULT_GROQ_API_KEY = os.getenv("GROQ_API_KEY", None)
     
     if len(sys.argv) < 2:
         print("Usage: python text_to_frontend_converter.py <TEXT_FILE> [OUTPUT_PATH]")

@@ -431,8 +431,8 @@ def main():
     import sys
     
     # Default API keys
-    DEFAULT_MISTRAL_API_KEY = os.getenv("MISTRAL_API_KEY", "j3QqwjYyXHa692fQKr3hawypMuYCdRmE")
-    DEFAULT_GROQ_API_KEY = os.getenv("GROQ_API_KEY", "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")
+    DEFAULT_MISTRAL_API_KEY = os.getenv("MISTRAL_API_KEY", None)
+    DEFAULT_GROQ_API_KEY = os.getenv("GROQ_API_KEY", None)
     
     if len(sys.argv) < 2:
         print("Improved Combined PDF Extractor")

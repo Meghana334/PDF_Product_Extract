@@ -7,8 +7,8 @@ from logger import setup_logger
 logger = setup_logger("main")
 
 # === Load API Keys ===
-DEFAULT_MISTRAL_API_KEY = os.getenv("MISTRAL_API_KEY", "j3QqwjYyXHa692fQKr3hawypMuYCdRmE")
-DEFAULT_GROQ_API_KEY = os.getenv("GROQ_API_KEY", "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")
+DEFAULT_MISTRAL_API_KEY = os.getenv("MISTRAL_API_KEY",None)
+DEFAULT_GROQ_API_KEY = os.getenv("GROQ_API_KEY", None)
 
 # === Load config.json if available ===
 def load_config(config_path: str = "config.json"):
@@ -21,8 +21,8 @@ def load_config(config_path: str = "config.json"):
 def create_sample_config():
     config = {
         "api_keys": {
-            "mistral_api_key": "j3QqwjYyXHa692fQKr3hawypMuYCdRmE",
-            "groq_api_key": "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"
+            "mistral_api_key": DEFAULT_MISTRAL_API_KEY,
+            "groq_api_key": DEFAULT_GROQ_API_KEY
         },
         "settings": {
             "output_directory": "output",
