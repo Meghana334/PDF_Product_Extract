@@ -3,6 +3,9 @@ import os
 from pathlib import Path
 from text_only_processor import TextOnlyPDFExtractor
 from logger import setup_logger
+from dotenv import load_dotenv
+
+load_dotenv()
 
 logger = setup_logger("text_main")
 
@@ -53,7 +56,7 @@ def process_single_pdf_text_only(pdf_path: str, mistral_api_key: str, groq_api_k
 # === Demo Function (Text Only) ===
 def demonstrate_text_extraction(mistral_api_key: str, groq_api_key: str):
     logger.info("=== PDF Text Extraction Demo ===")
-    pdf_path = "data/two.pdf"
+    pdf_path = "data/test.pdf"
 
     if Path(pdf_path).exists():
         process_single_pdf_text_only(pdf_path, mistral_api_key, groq_api_key)

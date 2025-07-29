@@ -63,7 +63,7 @@ def process_single_pdf(pdf_path: str, mistral_api_key: str, groq_api_key: str, o
 # === Demo Function ===
 def demonstrate_extraction(mistral_api_key: str, groq_api_key: str):
     logger.info("=== PDF Extraction Demo ===")
-    pdf_path = "data/two.pdf"
+    pdf_path = "PDF_Product_Extract/data/test.pdf"
 
     if Path(pdf_path).exists():
         process_single_pdf(pdf_path, mistral_api_key, groq_api_key)
